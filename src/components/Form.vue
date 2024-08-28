@@ -7,11 +7,19 @@
                 <div class="row mb-3">
                     <div class="col-md-6">
                         <label for="username" class="form-label">Username</label>
-                        <input type="text" class="form-control" id="username" v-model="formData.username">
+                        <input type="text" class="form-control" id="username"
+                        @blur="() => validateName(true)"
+                        @input="() => validateName(false)"
+                        v-model="formData.username">
+                        <div v-if="errors.username" class="text-danger">{{ errors.username }}></div>
                     </div>
                     <div class="col-md-6">
                         <label for="password" class="form-label">Password</label>
-                        <input type="password" class="form-control" id="password" v-model="formData.password">
+                        <input type="password" class="form-control" id="password"
+                        @blur="() => validatePassword(true)"
+                        @input="() => validatePassword(false)"                        
+                        v-model="formData.password">
+                        <div v-if="errors.password" class="text-danger">{{ errors.password }}</div>
                     </div>
                 </div>
                 <div class="row mb-3">
@@ -34,7 +42,10 @@
                 </div>
                 <div class="mb-3">
                     <label for="reason" class="form-label">Reason for Joining</label>
-                    <textarea class="form-control" id="reason" rows="3" v-model="formData.reason"></textarea>
+                    <textarea class="form-control" id="reason" rows="3" 
+                    @blur="() => validataReason(true)"
+                    @input="() => validataReaso(false)" 
+                    v-model="formData.reason"></textarea>
                 </div>
                 <div class="text-center">
                     <button type="submit" class="btn btn-primary me-2">Submit</button>
@@ -46,7 +57,7 @@
     </div>    
 
     <div class="row mt-5" v-if="submittedCards.length">
-   <div class="d-flex flex-wrap justify-content-start">
+   <!-- <div class="d-flex flex-wrap justify-content-start">
       <div v-for="(card, index) in submittedCards" :key="index" class="card m-2" style="width: 18rem;">
          <div class="card-header">
             User Information
@@ -58,15 +69,40 @@
             <li class="list-group-item">Gender: {{ card.gender }}</li>
             <li class="list-group-item">Reason: {{ card.reason }}</li>
          </ul>
-      </div>
-   </div>
+    </div> -->
+   <!-- </div> -->
 </div>
 
+    <div class="card">
+        <DataTable :value="submittedCards" tableStyle="min-width: 25rem">
+            <Column field="username" header="Username"></Column>
+            <Column field="password" header="Password"></Column>
+            <Column field="isAustralian" header="Australian Resident"></Column>
+            <Column field="gender" header="Gender"></Column>
+            <Column field="reason" header="Reason"></Column>
+        </DataTable>
+    </div>
 </template>
 
+
+
 <script setup>
+// import { ref, onMounted } from 'vue';
+// import { ProductService } from '@/service/ProductService';
+
+// onMounted(() => {
+//     ProductService.getProductsMini().then((data) => (products.value = data));
+// });
+
+// const products = ref();
+
+
+
+
 // Our logic will go here
 import { ref } from 'vue';
+import DataTable from 'primevue/datatable';
+import Column from 'primevue/column';
   
 const formData = ref({
     username: '',
@@ -79,12 +115,70 @@ const formData = ref({
 const submittedCards = ref([]);
 
 const submitForm = () => {
-    submittedCards.value.push({
-        ...formData.value
-    });
+    validateName(true);
+    validatePassword(true)
+    if (!errors.value.username && !errors.value.password) {
+        submittedCards.value.push({ ...formData.value});
+        clearForm();
+    }  
 };
 
+const clearForm = () =>{
+    formData.value = {
+        username: '',
+        password: '',
+        isAustralian: false,
+        reason: '',
+        gender: '' 
+    };
+};
 
+const errors = ref({
+    username: null,
+    password: null,
+    resident: null,
+    gender: null,
+    reason: null,
+});
+
+const validateName = (blur) =>{
+    if(formData.value.username.length<3){
+        if(blur)errors.value.username ="Name must be at least 3 characters";
+    } else {
+        errors.value.username = null;
+    }
+};
+
+// const validataReason = (blur) =>{
+//     if(formData.value.username.length < 5){
+//         if(blur)errors.value.reason = "Reason must be at least 5 word";
+//     }else{
+//         errors.value.reason = null;
+//     }
+// }
+
+const validatePassword = (blur) =>{
+    const password = formData.value.password;
+    const minLength = 8;
+    const hasUppercase=/[A-Z]/.test(password);
+    const hasLowercase=/[a-z]/.test(password);
+    const hasNumber =/\d/.test(password);
+    const hasSpecialChar =/[!@#$%^&*(),.?":{}<>]/.test(password);
+    if(password.length< minLength){
+        if (blur) errors.value.password = `Password must be at least ${minLength} characters long.`;
+    } else if(!hasUppercase) {
+        if (blur) errors.value.password = "Password must contain at least one uppercase letter.";
+    } else if(!hasLowercase){
+        if (blur) errors.value.password = "Password must contain at least one lowercase letter.";
+    } else if (!hasNumber){
+        if (blur) errors.value.password = "Password must contain at least one number.";
+    } else if (!hasSpecialChar){
+        if (blur) errors.value.password = "Password must contain at least one special character.";
+    } else {
+        errors.value.password = null;
+    }
+    
+};
 
 </script>
 
